@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ModuloTeamL;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProduccionMetasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -217,6 +218,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/LeaderModulo', [ModuloTeamL::class, 'LeaderModulo']);
     Route::post('/guardarRelacion', [ModuloTeamL::class, 'guardarRelacion']);
 
+	//nuevo apartado
+	Route::get('supervisorModulo', [ProduccionMetasController::class, 'supervisorModulo'])->name('metas.supervisorModulo');
+	Route::post('supervisorModulo', [ProduccionMetasController::class, 'storeSupervisor'])->name('agregarSupervisor');
+	Route::patch('supervisorModulo/{id}', [ProduccionMetasController::class, 'updateStatusSupervisor'])->name('ActualizarEstatusSupervisor');
 
 });
 
