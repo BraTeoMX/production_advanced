@@ -20,62 +20,68 @@
 
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
                     <div class="card-body">
-                        <div>
-                            <input type="text" id="searchInput" class="form-control mb-4" onkeyup="filterTable('myTable', 'searchInput')" placeholder="Buscar por supervisor o módulo...">
-                        </div>
+                        <form method="POST" action="{{ route('metas.storeProduccion1') }}">
+                            @csrf
+                            <div>
+                                <input type="text" id="searchInput" class="form-control mb-4" onkeyup="filterTable('myTable', 'searchInput')" placeholder="Buscar por supervisor o módulo...">
+                            </div>
 
-                        <div class="table-responsive">
-                            <table class="table-custom table-datos" id="myTable">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" style="text-align: center; width:400px">Supervisor</th>
-                                        <th rowspan="2" style="text-align: center; width:400px">Módulo</th>
-                                        <th colspan="7" style="text-align: center;">SEMANA {{ $current_week }}</th>
-                                        <th rowspan="2" style="text-align: center;">TE</th>
-                                    </tr>
-                                    <tr id="header-row">
-                                        <th class="green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="light-green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="yellow">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="orange">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="red">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="peach">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="grey">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($supervisoresPlanta1 as $supervisor)
+                            <div class="table-responsive">
+                                <table class="table-custom table-datos" id="myTable">
+                                    <thead>
                                         <tr>
-                                            <td style="text-align: left">{{ $supervisor->nombre }}</td>
-                                            <td>{{ $supervisor->modulo }}</td>
-                                            @for($i = 1; $i <= 7; $i++)
-                                                @php
-                                                    $isChecked = $supervisor->{'semana' . $current_week} == $i;
-                                                    $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
-                                                @endphp
-                                                <td class="centered-content {{ $colorClass }}">
-                                                    <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
-                                                        name="semanas[{{ $supervisor->id }}][semana{{ $current_week }}]"
-                                                        value="{{ $i }}"
-                                                        onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
-                                                        {{ $isChecked ? 'checked' : '' }} >
-                                                </td>
-                                            @endfor
-                                            <td class="centered-content oculto">
-                                                @php
-                                                    $extraCheckboxName = 'extra' . ($current_week);
-                                                    $isExtraChecked = $supervisor->$extraCheckboxName == 1;
-                                                @endphp
-                                                <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
-                                                    name="semanas[{{ $supervisor->id }}][{{ $extraCheckboxName }}]"
-                                                    value="1"
-                                                    {{ $isExtraChecked ? 'checked' : '' }} >
-                                            </td>
+                                            <th rowspan="2" style="text-align: center; width:400px">Supervisor</th>
+                                            <th rowspan="2" style="text-align: center; width:400px">Módulo</th>
+                                            <th colspan="7" style="text-align: center;">SEMANA {{ $current_week }}</th>
+                                            <th rowspan="2" style="text-align: center;">TE</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                        <tr id="header-row">
+                                            <th class="green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="light-green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="yellow">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="orange">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="red">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="peach">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="grey">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($supervisoresPlanta1 as $supervisor)
+                                            <tr>
+                                                <td style="text-align: left">{{ $supervisor->nombre }}</td>
+                                                <td>{{ $supervisor->modulo }}</td>
+                                                @for($i = 1; $i <= 7; $i++)
+                                                    @php
+                                                        $isChecked = $supervisor->{'semana' . $current_week} == $i;
+                                                        $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
+                                                    @endphp
+                                                    <td class="centered-content {{ $colorClass }}">
+                                                        <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
+                                                            name="semanas[{{ $supervisor->id }}][semana{{ $i }}]"
+                                                            value="{{ $i }}"
+                                                            onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
+                                                            {{ $isChecked ? 'checked' : '' }}>
+                                                    </td>
+                                                @endfor
+                                                <td class="centered-content oculto">
+                                                    @php
+                                                        $extraCheckboxName = 'extra' . ($current_week);
+                                                        $isExtraChecked = $supervisor->$extraCheckboxName == 1;
+                                                    @endphp
+                                                    <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
+                                                        name="semanas[{{ $supervisor->id }}][te]"
+                                                        value="1"
+                                                        {{ $isExtraChecked ? 'checked' : '' }}>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-container form-filter">
+                                <button type="submit" ><strong>Enviar </strong> </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -90,62 +96,68 @@
 
                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                     <div class="card-body">
-                        <div>
-                            <input type="text" id="searchInput2" class="form-control mb-4" onkeyup="filterTable('myTable2', 'searchInput2')" placeholder="Buscar por supervisor o módulo...">
-                        </div>
+                        <form method="POST" action="{{ route('metas.storeProduccion1') }}">
+                            @csrf
+                            <div>
+                                <input type="text" id="searchInput2" class="form-control mb-4" onkeyup="filterTable('myTable2', 'searchInput2')" placeholder="Buscar por supervisor o módulo...">
+                            </div>
 
-                        <div class="table-responsive">
-                            <table class="table-custom table-datos" id="myTable2">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" style="text-align: center; width:400px">Supervisor</th>
-                                        <th rowspan="2" style="text-align: center; width:400px">Módulo</th>
-                                        <th colspan="7" style="text-align: center;">SEMANA {{ $current_week }}</th>
-                                        <th rowspan="2" style="text-align: center;">TE</th>
-                                    </tr>
-                                    <tr id="header-row">
-                                        <th class="green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="light-green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="yellow">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="orange">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="red">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="peach">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                        <th class="grey">&nbsp; &nbsp; &nbsp; &nbsp;</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($supervisoresPlanta2 as $supervisor)
+                            <div class="table-responsive">
+                                <table class="table-custom table-datos" id="myTable2">
+                                    <thead>
                                         <tr>
-                                            <td style="text-align: left">{{ $supervisor->nombre }}</td>
-                                            <td>{{ $supervisor->modulo }}</td>
-                                            @for($i = 1; $i <= 7; $i++)
-                                                @php
-                                                    $isChecked = $supervisor->{'semana' . $current_week} == $i;
-                                                    $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
-                                                @endphp
-                                                <td class="centered-content {{ $colorClass }}">
-                                                    <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
-                                                        name="semanas[{{ $supervisor->id }}][semana{{ $current_week }}]"
-                                                        value="{{ $i }}"
-                                                        onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
-                                                        {{ $isChecked ? 'checked' : '' }} >
-                                                </td>
-                                            @endfor
-                                            <td class="centered-content oculto">
-                                                @php
-                                                    $extraCheckboxName = 'extra' . ($current_week);
-                                                    $isExtraChecked = $supervisor->$extraCheckboxName == 1;
-                                                @endphp
-                                                <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
-                                                    name="semanas[{{ $supervisor->id }}][{{ $extraCheckboxName }}]"
-                                                    value="1"
-                                                    {{ $isExtraChecked ? 'checked' : '' }} >
-                                            </td>
+                                            <th rowspan="2" style="text-align: center; width:400px">Supervisor</th>
+                                            <th rowspan="2" style="text-align: center; width:400px">Módulo</th>
+                                            <th colspan="7" style="text-align: center;">SEMANA {{ $current_week }}</th>
+                                            <th rowspan="2" style="text-align: center;">TE</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                        <tr id="header-row">
+                                            <th class="green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="light-green">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="yellow">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="orange">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="red">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="peach">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                            <th class="grey">&nbsp; &nbsp; &nbsp; &nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($supervisoresPlanta2 as $supervisor)
+                                            <tr>
+                                                <td style="text-align: left">{{ $supervisor->nombre }}</td>
+                                                <td>{{ $supervisor->modulo }}</td>
+                                                @for($i = 1; $i <= 7; $i++)
+                                                    @php
+                                                        $isChecked = $supervisor->{'semana' . $current_week} == $i;
+                                                        $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
+                                                    @endphp
+                                                    <td class="centered-content {{ $colorClass }}">
+                                                        <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
+                                                            name="semanas[{{ $supervisor->id }}][semana{{ $i }}]"
+                                                            value="{{ $i }}"
+                                                            onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
+                                                            {{ $isChecked ? 'checked' : '' }}>
+                                                    </td>
+                                                @endfor
+                                                <td class="centered-content oculto">
+                                                    @php
+                                                        $extraCheckboxName = 'extra' . ($current_week);
+                                                        $isExtraChecked = $supervisor->$extraCheckboxName == 1;
+                                                    @endphp
+                                                    <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
+                                                        name="semanas[{{ $supervisor->id }}][te]"
+                                                        value="1"
+                                                        {{ $isExtraChecked ? 'checked' : '' }}>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-container form-filter">
+                                <button type="submit" ><strong>Enviar </strong> </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

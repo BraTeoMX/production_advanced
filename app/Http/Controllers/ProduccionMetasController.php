@@ -75,11 +75,26 @@ class ProduccionMetasController extends Controller
 
     public function storeProduccion1(Request $request)
     {
+        $current_week = date('W');
+
         foreach ($request->semanas as $supervisor_id => $data) {
+            $te_value = isset($data['te']) ? 1 : 0; // Obtener el valor de 'te' o usar 0 si no está presente
+
+            // Inicializamos el valor como nulo para comprobar si se seleccionó algún checkbox de semana
+            $valor = null;
+
+            // Iterar a través de los datos para encontrar el valor de la semana
             foreach ($data as $key => $value) {
+                if ($key !== 'te' && is_numeric($value)) {
+                    $valor = $value;
+                }
+            }
+
+            // Si se ha seleccionado un valor para la semana, actualizamos/creamos el registro
+            if ($valor !== null) {
                 Produccion1::updateOrCreate(
-                    ['supervisor_id' => $supervisor_id, 'semana' => $key],
-                    ['te' => $value]
+                    ['supervisor_id' => $supervisor_id, 'semana' => $current_week],
+                    ['te' => $te_value, 'valor' => $valor]
                 );
             }
         }

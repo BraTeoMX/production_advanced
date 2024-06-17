@@ -14,6 +14,7 @@ class Produccion1 extends Model
     protected $fillable = [
         'supervisor_id',
         'semana',
+        'valor',
         'te',
     ];
 
