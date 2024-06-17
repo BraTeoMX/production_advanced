@@ -1,7 +1,7 @@
 <?php
 //Esta es la funcion principal, de inicio lo que mostrara  cuando se accede ini
 namespace App\Http\Controllers;
-use App\Produccion;
+use App\Produccion1;
 use App\Supervisor;
 use App\ColoresMetas;
 use Illuminate\Http\Request;
@@ -45,7 +45,7 @@ class ProduccionMetasController extends Controller
 
         // Asignar el valor por defecto para 'estatus'
         $data = $request->all();
-        $data['estatus'] = '1';
+        $data['estatus'] = 'A';
 
         Supervisor::create($data);
 
@@ -59,6 +59,32 @@ class ProduccionMetasController extends Controller
         $supervisor->save();
 
         return redirect()->route('metas.supervisorModulo')->with('success', 'Estatus del supervisor actualizado.');
+    }
+
+
+    public function registroSemanal()
+    {
+        $supervisoresPlanta1 = Supervisor::where('planta', 'Intimark1')->where('estatus', 'A')->get();
+        $supervisoresPlanta2 = Supervisor::where('planta', 'Intimark2')->where('estatus', 'A')->get();
+        $current_week = date('W');
+        $current_month = date('F');
+        $currentYear = date('Y');
+
+        return view('metas.registroSemanal', compact('supervisoresPlanta1', 'supervisoresPlanta2', 'current_week', 'current_month', 'currentYear'));
+    }
+
+    public function storeProduccion1(Request $request)
+    {
+        foreach ($request->semanas as $supervisor_id => $data) {
+            foreach ($data as $key => $value) {
+                Produccion1::updateOrCreate(
+                    ['supervisor_id' => $supervisor_id, 'semana' => $key],
+                    ['te' => $value]
+                );
+            }
+        }
+
+        return redirect()->route('metas.registroSemanal')->with('success', 'Datos de producción actualizados correctamente.');
     }
 
 }

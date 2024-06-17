@@ -223,5 +223,8 @@ Route::group(['middleware' => 'auth'], function () {
 	Route::post('supervisorModulo', [ProduccionMetasController::class, 'storeSupervisor'])->name('agregarSupervisor');
 	Route::patch('supervisorModulo/{id}', [ProduccionMetasController::class, 'updateStatusSupervisor'])->name('ActualizarEstatusSupervisor');
 
+	Route::get('registroSemanal', [ProduccionMetasController::class, 'registroSemanal'])->name('metas.registroSemanal');
+	Route::post('storeProduccion1', [ProduccionMetasController::class, 'storeProduccion1'])->name('metas.storeProduccion1');
+
 });
 
