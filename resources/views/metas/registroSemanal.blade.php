@@ -47,39 +47,41 @@
                                     </thead>
                                     <tbody>
                                         @foreach($supervisoresPlanta1 as $supervisor)
+                                            @php
+                                                $produccion = $produccionPlanta1->get($supervisor->id);
+                                                $valor = $produccion ? $produccion->valor : null;
+                                                $te = $produccion ? $produccion->te : 0;
+                                            @endphp
                                             <tr>
                                                 <td style="text-align: left">{{ $supervisor->nombre }}</td>
                                                 <td>{{ $supervisor->modulo }}</td>
                                                 @for($i = 1; $i <= 7; $i++)
                                                     @php
-                                                        $isChecked = $supervisor->{'semana' . $current_week} == $i;
+                                                        $isChecked = $valor == $i;
                                                         $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
                                                     @endphp
                                                     <td class="centered-content {{ $colorClass }}">
-                                                        <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
-                                                            name="semanas[{{ $supervisor->id }}][semana{{ $i }}]"
+                                                        <input type="checkbox" class="custom-checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
+                                                            name="semanas[{{ $supervisor->id }}][valor]"
                                                             value="{{ $i }}"
                                                             onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
                                                             {{ $isChecked ? 'checked' : '' }}>
                                                     </td>
                                                 @endfor
-                                                <td class="centered-content oculto">
-                                                    @php
-                                                        $extraCheckboxName = 'extra' . ($current_week);
-                                                        $isExtraChecked = $supervisor->$extraCheckboxName == 1;
-                                                    @endphp
-                                                    <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
+                                                <td class="centered-content">
+                                                    <input type="checkbox" class="custom-checkbox" id="extra-checkbox-{{ $supervisor->id }}"
                                                         name="semanas[{{ $supervisor->id }}][te]"
                                                         value="1"
-                                                        {{ $isExtraChecked ? 'checked' : '' }}>
+                                                        {{ $te == 1 ? 'checked' : '' }}>
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
                             </div>
+                            <hr>
                             <div class="form-container form-filter">
-                                <button type="submit" ><strong>Enviar </strong> </button>
+                                <button class="boton-azul" type="submit" ><strong>Enviar </strong> </button>
                             </div>
                         </form>
                     </div>
@@ -123,39 +125,41 @@
                                     </thead>
                                     <tbody>
                                         @foreach($supervisoresPlanta2 as $supervisor)
+                                            @php
+                                                $produccion = $produccionPlanta2->get($supervisor->id);
+                                                $valor = $produccion ? $produccion->valor : null;
+                                                $te = $produccion ? $produccion->te : 0;
+                                            @endphp
                                             <tr>
                                                 <td style="text-align: left">{{ $supervisor->nombre }}</td>
                                                 <td>{{ $supervisor->modulo }}</td>
                                                 @for($i = 1; $i <= 7; $i++)
                                                     @php
-                                                        $isChecked = $supervisor->{'semana' . $current_week} == $i;
+                                                        $isChecked = $valor == $i;
                                                         $colorClass = $isChecked ? 'class-name-for-color-' . $i : '';
                                                     @endphp
                                                     <td class="centered-content {{ $colorClass }}">
-                                                        <input type="checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
-                                                            name="semanas[{{ $supervisor->id }}][semana{{ $i }}]"
+                                                        <input type="checkbox" class="custom-checkbox" id="checkbox-{{ $supervisor->id }}-{{ $i }}"
+                                                            name="semanas[{{ $supervisor->id }}][valor]"
                                                             value="{{ $i }}"
                                                             onclick="uncheckOthers(this, {{ $i }}, '#extra-checkbox-{{ $supervisor->id }}')"
                                                             {{ $isChecked ? 'checked' : '' }}>
                                                     </td>
                                                 @endfor
-                                                <td class="centered-content oculto">
-                                                    @php
-                                                        $extraCheckboxName = 'extra' . ($current_week);
-                                                        $isExtraChecked = $supervisor->$extraCheckboxName == 1;
-                                                    @endphp
-                                                    <input type="checkbox" id="extra-checkbox-{{ $supervisor->id }}"
+                                                <td class="centered-content">
+                                                    <input type="checkbox" class="custom-checkbox" id="extra-checkbox-{{ $supervisor->id }}"
                                                         name="semanas[{{ $supervisor->id }}][te]"
                                                         value="1"
-                                                        {{ $isExtraChecked ? 'checked' : '' }}>
+                                                        {{ $te == 1 ? 'checked' : '' }}>
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
                             </div>
+                            <hr>
                             <div class="form-container form-filter">
-                                <button type="submit" ><strong>Enviar </strong> </button>
+                                <button class="boton-azul" type="submit" ><strong>Enviar </strong> </button>
                             </div>
                         </form>
                     </div>
@@ -229,6 +233,26 @@
         .card-title {
             font-weight: bold;
         }
+
+        /* Estilos para agrandar los checkboxes */
+        .custom-checkbox {
+            transform: scale(1.5);
+            margin: 5px;
+        }
+
+        .boton-azul {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        font-size: 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .boton-azul:hover {
+        background-color: #0056b3;
+    }
     </style>
 
     <script>

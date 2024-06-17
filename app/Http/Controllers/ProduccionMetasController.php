@@ -70,7 +70,15 @@ class ProduccionMetasController extends Controller
         $current_month = date('F');
         $currentYear = date('Y');
 
-        return view('metas.registroSemanal', compact('supervisoresPlanta1', 'supervisoresPlanta2', 'current_week', 'current_month', 'currentYear'));
+        $produccionPlanta1 = Produccion1::where('semana', $current_week)
+            ->whereIn('supervisor_id', $supervisoresPlanta1->pluck('id'))
+            ->get()->keyBy('supervisor_id');
+
+        $produccionPlanta2 = Produccion1::where('semana', $current_week)
+            ->whereIn('supervisor_id', $supervisoresPlanta2->pluck('id'))
+            ->get()->keyBy('supervisor_id');
+
+        return view('metas.registroSemanal', compact('supervisoresPlanta1', 'supervisoresPlanta2', 'produccionPlanta1', 'produccionPlanta2', 'current_week', 'current_month', 'currentYear'));
     }
 
     public function storeProduccion1(Request $request)
