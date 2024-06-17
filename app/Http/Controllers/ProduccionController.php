@@ -2,6 +2,8 @@
 //Esta es la funcion principal, de inicio lo que mostrara  cuando se accede ini
 namespace App\Http\Controllers;
 use App\Produccion;
+use App\Produccion1;
+use App\Semana;
 use App\ColoresMetas;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -40,80 +42,73 @@ class ProduccionController extends Controller
             'SIN CUMPLIR META MOD ENTTO NO PARTICIPA EN PROGRAMA',
             '** CUMPLEN Y APOYAN TE'
         ];
-        Carbon::setLocale('es');
+
         $now = Carbon::now();
-        //$datosProduccion = Produccion::all();
-        // Obtener registros donde la columna 'planta' es igual a 'Intimark1'
-        $datosProduccionIntimark1 = Produccion::where('planta', 'Intimark1')
-            ->where('estatus', 'A')
-            ->orderBy('modulo', 'asc')
-            ->get();
-
-        // Obtener registros donde la columna 'planta' es igual a 'Intimark2'
-        $datosProduccionIntimark2 = Produccion::where('planta', 'Intimark2')
-            ->where('estatus', 'A')
-            ->orderBy('modulo', 'asc')
-            ->get();
-
-        $numSemanas = 10;
-        // Obtener el número de la semana actual
         $current_week = $now->weekOfYear;
-        // Obtener el nombre del mes actual
-        $current_month = $now->translatedFormat('F');
-        $current_month = ucfirst($current_month);
-        $currentYear = $now->format('Y'); // 'Y' es el formato para el año completo, como "2023"
-        // O simplemente
+        $current_month = ucfirst($now->translatedFormat('F'));
+        $current_year = $now->year;
+
+        // Obtener o crear el registro de la semana actual en la tabla `semanas`
+        $semana = Semana::firstOrCreate(
+            ['anio' => $current_year, 'semana' => $current_week],
+            ['color' => $colores[$current_week % count($colores)], 'titulo' => $titulos[$current_week % count($titulos)]]
+        );
+
+        // Obtener registros de producción para las plantas
+        $datosProduccionIntimark1 = Produccion1::where('planta', 'Intimark1')
+            ->where('semana_id', $semana->id)
+            ->orderBy('modulo', 'asc')
+            ->get();
+
+        $datosProduccionIntimark2 = Produccion1::where('planta', 'Intimark2')
+            ->where('semana_id', $semana->id)
+            ->orderBy('modulo', 'asc')
+            ->get();
 
         return view('metas.SemanaActual', compact(
-            'numSemanas','currentYear','current_week','current_month',
-            'colores','titulos',
-            'datosProduccionIntimark1', 'datosProduccionIntimark2'));
+            'semana', 'current_year', 'current_week', 'current_month',
+            'colores', 'titulos',
+            'datosProduccionIntimark1', 'datosProduccionIntimark2'
+        ));
     }
+
     //Esta funcion permite actualizar los datos de la vista llamada SemanaActual y lo hace exclusivamente de la semana actual
     public function actualizarTabla(Request $request)
     {
-        //dd($request->all());
-        Carbon::setLocale('es');
         $now = Carbon::now();
         $current_week = $now->weekOfYear;
-        $semanaColumn = 'semana' . $current_week;
-        $extraColumn = 'extra' . $current_week;
-        Produccion::where('planta', 'Intimark1')->update([
-            $semanaColumn => 0,
-            $extraColumn => 0
-        ]);
-         // $request->semanas contendrá todos los datos de los checkboxes
-         foreach ($request->semanas as $idProduccion => $semanas) {
-            $produccion = Produccion::find($idProduccion);
+        $current_year = $now->year;
+
+        $semana = Semana::firstOrCreate(
+            ['anio' => $current_year, 'semana' => $current_week]
+        );
+
+        foreach ($request->semanas as $idProduccion => $semanas) {
+            $produccion = Produccion1::find($idProduccion);
 
             if ($produccion) {
-                // Reiniciar las semanas a 0
-                for ($i = 1; $i <= 7; $i++) {
-                    $semanaKey = 'semana' . $current_week . $i;
-                    $produccion->$semanaKey = 0;
-                }
+                // Reiniciar el estado de la producción
+                $produccion->estado = 0;
+                $produccion->extra = 0;
 
-                // Actualizar según los checkboxes seleccionados
-                foreach ($semanas as $semana => $valor) {
-                    if (Str::startsWith($semana, 'semana')) {
-                        $produccion->{$semana} = $valor;
+                // Actualizar el estado según los checkboxes seleccionados
+                foreach ($semanas as $semanaKey => $valor) {
+                    if (Str::startsWith($semanaKey, 'semana')) {
+                        $produccion->estado = $valor;
                     }
                 }
 
                 // Lógica para el nuevo checkbox "extra"
-                $extraCheckboxName = 'extra' . $current_week;
-                $produccion->$extraCheckboxName = isset($semanas[$extraCheckboxName]) ? 1 : 0;
+                $produccion->extra = isset($semanas['extra']) ? 1 : 0;
 
                 // Guardar los cambios
                 $produccion->save();
             }
         }
 
-
-
-    // Redirecciona de vuelta a la página con un mensaje de éxito o lo que consideres necesario
-    return back()->with('success', 'Selecciones actualizadas correctamente.');
+        return back()->with('success', 'Selecciones actualizadas correctamente.');
     }
+
 
     public function actualizarTablaP2(Request $request)
     {
@@ -131,14 +126,14 @@ class ProduccionController extends Controller
     // Solo proceder si las columnas existen en la tabla Produccion
     if ($columnasExistentes) {
         // Actualizar todas las filas en la tabla 'Produccion' donde la planta sea 'Intimark2'
-        Produccion::where('planta', 'Intimark2')->update([
+        Produccion1::where('planta', 'Intimark2')->update([
             $semanaColumn => 0,
             $extraColumn => 0
         ]);
 
         // Iterar sobre los datos de los checkboxes enviados en la solicitud
         foreach ($request->semanas as $idProduccion => $semanas) {
-            $produccion = Produccion::find($idProduccion);
+            $produccion = Produccion1::find($idProduccion);
             if ($produccion) {
                 // Reiniciar las semanas a 0
                 $produccion->$semanaColumn = 0;
@@ -194,14 +189,14 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        //$datosProduccion = Produccion::all();
+        //$datosProduccion = Produccion1::all();
         // Obtener registros donde la columna 'planta' es igual a 'Intimark1'
-        $datosProduccionIntimark1 = Produccion::where('planta', 'Intimark1')
+        $datosProduccionIntimark1 = Produccion1::where('planta', 'Intimark1')
             ->where('estatus', 'A')
             ->get();
 
         // Obtener registros donde la columna 'planta' es igual a 'Intimark2'
-        $datosProduccionIntimark2 = Produccion::where('planta', 'Intimark2')
+        $datosProduccionIntimark2 = Produccion1::where('planta', 'Intimark2')
             ->where('estatus', 'A')
             ->get();
         //dd($datosProduccionIntimark1, $datosProduccionIntimark2);
@@ -240,23 +235,23 @@ class ProduccionController extends Controller
         $contadorSuma = [];
 
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
             ->where('planta', 'Intimark1')
             ->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark1')
                 ->count();
             }
         }
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorSuma[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $contadorSuma[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
             ->where('planta', 'Intimark1')
             ->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark1')
                 ->count();
             }
@@ -275,24 +270,24 @@ class ProduccionController extends Controller
 
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
             // Contador total para cada semana
-            $TcontadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $TcontadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
                 ->where('planta', 'Intimark1')
                 ->count();
 
             // Contadores para cada día de la semana
             $TcontadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $TcontadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $TcontadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                     ->where('planta', 'Intimark1')
                     ->count();
             }
 
             // Contador de suma para cada semana
-            $TcontadorSuma[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $TcontadorSuma[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
                 ->where('planta', 'Intimark1')
                 ->count();
             // Contador de suma para cada semana
-            $TcontadorSuma3[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3])
+            $TcontadorSuma3[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3])
                 ->where('planta', 'Intimark1')
                 ->count();
 
@@ -307,24 +302,24 @@ class ProduccionController extends Controller
             // Apartado para Planta 2:
             // + + + + + ++ +
             // Contador total para cada semana
-            $TcontadorTSPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $TcontadorTSPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
                 ->where('planta', 'Intimark2')
                 ->count();
 
             // Contadores para cada día de la semana
             $TcontadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $TcontadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $TcontadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                     ->where('planta', 'Intimark2')
                     ->count();
             }
 
             // Contador de suma para cada semana
-            $TcontadorSumaPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $TcontadorSumaPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
                 ->where('planta', 'Intimark2')
                 ->count();
             // Contador de suma para cada semana
-            $TcontadorSuma3Planta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3])
+            $TcontadorSuma3Planta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3])
                 ->where('planta', 'Intimark2')
                 ->count();
 
@@ -341,24 +336,24 @@ class ProduccionController extends Controller
         $contadoresSemanaPlanta2 = [];
         $contadorSumaP2 = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTSplanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $contadorTSplanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
             ->where('planta', 'Intimark2')
             ->count();
             $contadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark2')
                 ->count("semana$semana");
             }
         }
         //dd($contadoresSemanaPlanta2);
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorSumaP2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $contadorSumaP2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
             ->where('planta', 'Intimark2')
             ->count();
             $contadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark2')
                 ->count("semana$semana");
             }
@@ -458,7 +453,7 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
+        $datosProduccion = Produccion1::all();
         // Obtener el número de la semana actual
         $current_week = $now->weekOfYear;
         // Obtener el nombre del mes actual
@@ -491,10 +486,10 @@ class ProduccionController extends Controller
         $contadorTS = [];
         $contadoresSemana = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)->count("semana$semana");
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)->count("semana$semana");
             }
         }
         // $colorClasses es un arreglo que nos da las propiedades de los colores y que manda a llamar de forma dinamica a la tabla de la vista
@@ -569,9 +564,9 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
+        $datosProduccion = Produccion1::all();
         // Obtener registros donde la columna 'planta' es igual a 'Intimark1'
-        $datosProduccionIntimark1 = Produccion::where('planta', 'Intimark1')
+        $datosProduccionIntimark1 = Produccion1::where('planta', 'Intimark1')
             ->where('estatus', 'A')
             ->get();
         // Obtener el número de la semana actual
@@ -606,10 +601,10 @@ class ProduccionController extends Controller
         $contadorTS = [];
         $contadoresSemana = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)->count("semana$semana");
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)->count("semana$semana");
             }
         }
         // $colorClasses es un arreglo que nos da las propiedades de los colores y que manda a llamar de forma dinamica a la tabla de la vista
@@ -707,9 +702,9 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
+        $datosProduccion = Produccion1::all();
         // Obtener registros donde la columna 'planta' es igual a 'Intimark2'
-        $datosProduccionIntimark2 = Produccion::where('planta', 'Intimark2')
+        $datosProduccionIntimark2 = Produccion1::where('planta', 'Intimark2')
             //->where('estatus', 'A')
             ->get();
         // Obtener el número de la semana actual
@@ -744,13 +739,13 @@ class ProduccionController extends Controller
         $contadorTSplanta2 = [];
         $contadoresSemanaPlanta2 = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTSplanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $contadorTSplanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
             ->where('planta', 'Intimark2')
             ->count();
             //dd($contadorTSplanta2);
             $contadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark2')
                 ->count("semana$semana");
             }
@@ -851,8 +846,8 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
-        $datosProduccionIntimark1 = Produccion::where('planta', 'Intimark1')
+        $datosProduccion = Produccion1::all();
+        $datosProduccionIntimark1 = Produccion1::where('planta', 'Intimark1')
             ->orderBy('modulo', 'asc')
             //->where('estatus', 'A')
             ->get();
@@ -889,23 +884,23 @@ class ProduccionController extends Controller
         $contadorSuma = [];
         $contadoresSemana = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
             ->where('planta', 'Intimark1')
             ->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark1')
                 ->count();
             }
         }
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorSuma[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $contadorSuma[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
             ->where('planta', 'Intimark1')
             ->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark1')
                 ->count();
             }
@@ -923,24 +918,24 @@ class ProduccionController extends Controller
 
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
             // Contador total para cada semana
-            $TcontadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $TcontadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
                 ->where('planta', 'Intimark1')
                 ->count();
 
             // Contadores para cada día de la semana
             $TcontadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $TcontadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)
+                $TcontadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)
                     ->where('planta', 'Intimark1')
                     ->count();
             }
 
             // Contador de suma para cada semana
-            $TcontadorSuma[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $TcontadorSuma[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
                 ->where('planta', 'Intimark1')
                 ->count();
             // Contador de suma para cada semana
-            $TcontadorSuma3[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3])
+            $TcontadorSuma3[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3])
                 ->where('planta', 'Intimark1')
                 ->count();
 
@@ -955,24 +950,24 @@ class ProduccionController extends Controller
             // Apartado para Planta 2:
             // + + + + + ++ +
             // Contador total para cada semana
-            $TcontadorTSPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $TcontadorTSPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
                 ->where('planta', 'Intimark2')
                 ->count();
 
             // Contadores para cada día de la semana
             $TcontadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $TcontadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $TcontadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                     ->where('planta', 'Intimark2')
                     ->count();
             }
 
             // Contador de suma para cada semana
-            $TcontadorSumaPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $TcontadorSumaPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
                 ->where('planta', 'Intimark2')
                 ->count();
             // Contador de suma para cada semana
-            $TcontadorSuma3Planta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3])
+            $TcontadorSuma3Planta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3])
                 ->where('planta', 'Intimark2')
                 ->count();
 
@@ -1093,8 +1088,8 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
-        $datosProduccionIntimark2 = Produccion::where('planta', 'Intimark2')
+        $datosProduccion = Produccion1::all();
+        $datosProduccionIntimark2 = Produccion1::where('planta', 'Intimark2')
             //->where('estatus', 'A')
             ->orderBy('modulo', 'asc')
             ->get();
@@ -1134,24 +1129,24 @@ class ProduccionController extends Controller
         $contadoresSemanaPlanta2 = [];
         $contadorSumaP2 = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorSumaP2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+            $contadorSumaP2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
             ->where('planta', 'Intimark2')
             ->count();
             $contadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark2')
                 ->count("semana$semana");
             }
         }
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTSplanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+            $contadorTSplanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
             ->where('planta', 'Intimark2')
             ->count();
             //dd($contadorTSplanta2);
             $contadoresSemanaPlanta2[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                $contadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                 ->where('planta', 'Intimark2')
                 ->count("semana$semana");
             }
@@ -1174,24 +1169,24 @@ class ProduccionController extends Controller
              // Apartado para Planta 2:
              // + + + + + ++ +
              // Contador total para cada semana
-             $TcontadorTSPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
+             $TcontadorTSPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])
                  ->where('planta', 'Intimark2')
                  ->count();
 
              // Contadores para cada día de la semana
              $TcontadoresSemanaPlanta2[$semana] = [];
              for ($i = 1; $i <= 7; $i++) {
-                 $TcontadoresSemanaPlanta2[$semana][$i] = Produccion::where("semana$semana", $i)
+                 $TcontadoresSemanaPlanta2[$semana][$i] = Produccion1::where("semana$semana", $i)
                      ->where('planta', 'Intimark2')
                      ->count();
              }
 
              // Contador de suma para cada semana
-             $TcontadorSumaPlanta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4])
+             $TcontadorSumaPlanta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4])
                  ->where('planta', 'Intimark2')
                  ->count();
              // Contador de suma para cada semana
-             $TcontadorSuma3Planta2[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3])
+             $TcontadorSuma3Planta2[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3])
                  ->where('planta', 'Intimark2')
                  ->count();
 
@@ -1312,7 +1307,7 @@ class ProduccionController extends Controller
         $numSemanas = 52;
         Carbon::setLocale('es');
         $now = Carbon::now();
-        $datosProduccion = Produccion::all();
+        $datosProduccion = Produccion1::all();
         // Obtener el número de la semana actual
         $current_week = $now->weekOfYear;
         // Obtener el nombre del mes actual
@@ -1345,10 +1340,10 @@ class ProduccionController extends Controller
         $contadorTS = [];
         $contadoresSemana = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)->count("semana$semana");
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)->count("semana$semana");
             }
         }
         // $colorClasses es un arreglo que nos da las propiedades de los colores y que manda a llamar de forma dinamica a la tabla de la vista
@@ -1415,11 +1410,11 @@ class ProduccionController extends Controller
     public function TeamLeaderModulo(Request $request)
     {
         $mensaje = "Hola Mundo";
-        $datosProduccionIntimark1 = Produccion::where('planta', 'Intimark1')
+        $datosProduccionIntimark1 = Produccion1::where('planta', 'Intimark1')
         ->get();
 
         // Obtener registros donde la columna 'planta' es igual a 'Intimark2'
-        $datosProduccionIntimark2 = Produccion::where('planta', 'Intimark2')
+        $datosProduccionIntimark2 = Produccion1::where('planta', 'Intimark2')
             ->get();
 
 
@@ -1429,7 +1424,7 @@ class ProduccionController extends Controller
     public function agregarTeamLeader(Request $request)
     {
         // Primero, verifica si ya existe un registro con el mismo 'nombre' y 'modulo' para la 'planta' dada
-        $existe = Produccion::where('nombre', $request->input('nombre'))
+        $existe = Produccion1::where('nombre', $request->input('nombre'))
             ->where('modulo', $request->input('modulo'))
             ->where('planta', $request->input('planta'))
             ->exists();
@@ -1449,7 +1444,7 @@ class ProduccionController extends Controller
     }
 
     public function ActualizarEstatusP1(Request $request, $id) {
-        $teamLeader = Produccion::where('planta', 'Intimark1')->findOrFail($id);
+        $teamLeader = Produccion1::where('planta', 'Intimark1')->findOrFail($id);
         $teamLeader->estatus = $request->input('estatus', 'A'); // Asumiendo 'A' como valor por defecto para "Dar de Alta"
         $teamLeader->save();
 
@@ -1459,7 +1454,7 @@ class ProduccionController extends Controller
     }
 
     public function ActualizarEstatusP2(Request $request, $id) {
-        $teamLeader = Produccion::where('planta', 'Intimark2')->findOrFail($id);
+        $teamLeader = Produccion1::where('planta', 'Intimark2')->findOrFail($id);
         $teamLeader->estatus = $request->input('estatus', 'A'); // Asumiendo 'A' como valor por defecto para "Dar de Alta"
         $teamLeader->save();
 
@@ -1481,16 +1476,16 @@ class ProduccionController extends Controller
     {
 
         $mensaje = "0";
-        $datosProduccion = Produccion::all();
+        $datosProduccion = Produccion1::all();
         $ColoresMetas = ColoresMetas::all();
         $numSemanas = 10;
         $contadorTS = [];
         $contadoresSemana = [];
         for ($semana = 1; $semana <= $numSemanas; $semana++) {
-            $contadorTS[$semana] = Produccion::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
+            $contadorTS[$semana] = Produccion1::whereIn("semana$semana", [1, 2, 3, 4, 5, 6, 7])->count();
             $contadoresSemana[$semana] = [];
             for ($i = 1; $i <= 7; $i++) {
-                $contadoresSemana[$semana][$i] = Produccion::where("semana$semana", $i)->count("semana$semana");
+                $contadoresSemana[$semana][$i] = Produccion1::where("semana$semana", $i)->count("semana$semana");
             }
         }
 
@@ -1521,7 +1516,7 @@ class ProduccionController extends Controller
                 // Quitamos el prefijo "dato" para obtener solo el número
                 $valorNumerico = intval(substr($semanaValue, 4));
 
-                $produccion = Produccion::find($id);
+                $produccion = Produccion1::find($id);
                 // Verificamos si encontramos la producción
                 if ($produccion) {
                     // Actualizamos el valor de la semana correspondiente con el número

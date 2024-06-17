@@ -15,17 +15,18 @@
 
         <!-- Tarjeta para Planta 1 -->
         <div class="card">
-          <div class="card-header" id="headingOne" style="background: #4F3C20;">
-              <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne" style="color: white; font-size: 16px; font-weight: bold;">
-                Planta 1 - Ixtlahuaca
-              </button>
-          </div>
-
-          <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-            <div class="card-body">
-              <!-- Contenido para Planta 1 -->
-              <form method="POST" action="{{ route('metas.actualizarTabla') }}">
-                @csrf
+            <div class="card-header" id="headingOne" style="background: #4F3C20;">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{ $semana->id }}" aria-expanded="true" aria-controls="collapse{{ $semana->id }}" style="color: white; font-size: 16px; font-weight: bold;">
+                    Planta 1 - Ixtlahuaca
+                </button>
+            </div>
+            
+            <div id="collapse{{ $semana->id }}" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    <!-- Contenido para Planta 1 -->
+                    <form method="POST" action="{{ route('metas.actualizarTabla') }}">
+                        @csrf
+                        <input type="hidden" name="semana_id" value="{{ $semana->id }}">
                 <div class="form-container form-filter">
                     {{-- Botón de enviar --}}
                     {{--
