@@ -39,7 +39,7 @@
                                 @foreach ($mesesAMostrar as $mes => $semanas)
                                     @foreach ($semanas as $semana)
                                         <th class="semana semana{{ $semana }}">&nbsp;{{ $contadorTS[$semana] }}&nbsp;</th>
-                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje }}%</strong></th>
+                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje[$semana] ?? 0 }}%</strong></th>
                                     @endforeach
                                 @endforeach
                             </tr>
@@ -94,9 +94,9 @@
                                         @foreach ($mesesAMostrar as $mes => $semanas)
                                             @foreach ($semanas as $semana)
                                                 @php
-                                                    $produccion = $produccionPlanta1[$supervisor->id]->firstWhere('semana', $semana);
+                                                    $produccion = $produccionPlanta1->where('supervisor_id', $supervisor->id)->where('semana', $semana)->first();
                                                     $valorSemanal = $produccion ? $produccion->valor : '';
-                                                    $colorClass = $colorClasses[$valorSemanal] ?? '';
+                                                    $colorClass = $colores[$valorSemanal] ?? '';
                                                     $extraValue = $produccion ? $produccion->te : 0;
                                                 @endphp
                                                 <td class="{{ $colorClass }}">
@@ -144,8 +144,8 @@
                                 <th>Total de Módulos</th>
                                 @foreach ($mesesAMostrar as $mes => $semanas)
                                     @foreach ($semanas as $semana)
-                                        <th class="semana semana{{ $semana }}">&nbsp;{{ $contadorTSplanta2[$semana] }}&nbsp;</th>
-                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje }}%</strong></th>
+                                        <th class="semana semana{{ $semana }}">&nbsp;{{ $contadorTS[$semana] }}&nbsp;</th>
+                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje[$semana] ?? 0 }}%</strong></th>
                                     @endforeach
                                 @endforeach
                             </tr>
@@ -156,8 +156,8 @@
                                     @foreach ($mesesAMostrar as $mes => $semanas)
                                         @foreach ($semanas as $semana)
                                             @php
-                                                $valor = $contadoresSemanaPlanta2[$semana][$i];
-                                                $total = $contadorTSplanta2[$semana];
+                                                $valor = $contadoresSemana[$semana][$i];
+                                                $total = $contadorTS[$semana];
                                                 $porcentaje = ($total != 0) ? number_format(($valor / $total) * 100, 2) : 0;
                                             @endphp
                                             <td class="semana semana{{ $semana }}">&nbsp;&nbsp;{{ $valor }}&nbsp;</td>
@@ -200,9 +200,9 @@
                                         @foreach ($mesesAMostrar as $mes => $semanas)
                                             @foreach ($semanas as $semana)
                                                 @php
-                                                    $produccion = $produccionPlanta2[$supervisor->id]->firstWhere('semana', $semana);
+                                                    $produccion = $produccionPlanta2->where('supervisor_id', $supervisor->id)->where('semana', $semana)->first();
                                                     $valorSemanal = $produccion ? $produccion->valor : '';
-                                                    $colorClass = $colorClasses[$valorSemanal] ?? '';
+                                                    $colorClass = $colores[$valorSemanal] ?? '';
                                                     $extraValue = $produccion ? $produccion->te : 0;
                                                 @endphp
                                                 <td class="{{ $colorClass }}">

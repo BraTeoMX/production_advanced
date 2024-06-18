@@ -67,7 +67,7 @@ class ProduccionMetasController extends Controller
     {
         $supervisoresPlanta1 = Supervisor::where('planta', 'Intimark1')->where('estatus', 'A')->get();
         $supervisoresPlanta2 = Supervisor::where('planta', 'Intimark2')->where('estatus', 'A')->get();
-        $current_week = date('W');
+        $current_week = 23;
         $current_month = date('F');
         $currentYear = date('Y');
 
@@ -84,7 +84,7 @@ class ProduccionMetasController extends Controller
 
     public function storeProduccion1(Request $request)
     {
-        $current_week = date('W');
+        $current_week = 23;
 
         foreach ($request->semanas as $supervisor_id => $data) {
             $te_value = isset($data['te']) ? 1 : 0; // Obtener el valor de 'te' o usar 0 si no está presente
@@ -114,6 +114,9 @@ class ProduccionMetasController extends Controller
 
     public function reporteGeneralMetas()
     {
+        $supervisoresPlanta1 = Supervisor::where('planta', 'Intimark1')->get();
+        $supervisoresPlanta2 = Supervisor::where('planta', 'Intimark2')->get();
+
         $produccionPlanta1 = Produccion1::with('supervisor')->whereHas('supervisor', function ($query) {
             $query->where('planta', 'Intimark1');
         })->get();
@@ -131,6 +134,15 @@ class ProduccionMetasController extends Controller
         $Tporcentajes3 = [];
         $TcontadorSuma = [];
         $Tporcentajes = [];
+
+        $colores = ['#00B0F0', '#00B050', '#FFFF00', '#C65911', '#FF0000', '#A6A6A6', '#F9F9EB']; // Definir los colores
+        $titulos = ['CUMPLIMIENTO DE META JUEVES 7:00 P.M.', 
+                    'CUMPLIMIENTO META VIERNES ANTES DE LAS 2:00 P.M ', 
+                    'CUMPLIMIENTO META VIERNES 2:00 P.M.', 
+                    'CUMPLIMIENTO META VIERNES DESPUES DE LAS 2:00 P.M. ', 
+                    'NO CUPLIO META VIERNES 2:00 P.M. ,SIN APOYO TE', 
+                    'NO CUMPLE META VIERNES 2:00 P.M., CON TE VIERNES Y SIN APOYO SABADO TE ', 
+                    'SIN CUMPLIR META MOD ENTTO NO PARTICIPA EN PROGRAMA ']; // Definir los títulos
 
         foreach ($mesesAMostrar as $mes => $semanas) {
             foreach ($semanas as $semana) {
@@ -194,10 +206,14 @@ class ProduccionMetasController extends Controller
             'TcontadorSuma',
             'Tporcentajes',
             'produccionPlanta1',
-            'produccionPlanta2'
+            'produccionPlanta2',
+            'supervisoresPlanta1',
+            'supervisoresPlanta2',
+            'colores',
+            'titulos'
         ));
     }
-    
+
     private function obtenerMeses()
     {
         // Obtener todos los registros de la tabla produccion1
