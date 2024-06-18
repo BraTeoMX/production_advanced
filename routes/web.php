@@ -226,5 +226,7 @@ Route::group(['middleware' => 'auth'], function () {
 	Route::get('registroSemanal', [ProduccionMetasController::class, 'registroSemanal'])->name('metas.registroSemanal');
 	Route::post('storeProduccion1', [ProduccionMetasController::class, 'storeProduccion1'])->name('metas.storeProduccion1');
 
+	Route::get('reporteGeneralMetas', [ProduccionMetasController::class, 'reporteGeneralMetas'])->name('metas.reporteGeneralMetas');
+
 });
 

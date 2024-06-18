@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ProduccionesMultiExport;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use DateTime; // Asegúrate de importar esta clase
 
 
 
@@ -109,5 +110,132 @@ class ProduccionMetasController extends Controller
 
         return redirect()->route('metas.registroSemanal')->with('success', 'Datos de producción actualizados correctamente.');
     }
+
+
+    public function reporteGeneralMetas()
+    {
+        $produccionPlanta1 = Produccion1::with('supervisor')->whereHas('supervisor', function ($query) {
+            $query->where('planta', 'Intimark1');
+        })->get();
+
+        $produccionPlanta2 = Produccion1::with('supervisor')->whereHas('supervisor', function ($query) {
+            $query->where('planta', 'Intimark2');
+        })->get();
+
+        $mesesAMostrar = $this->obtenerMeses();
+
+        $contadorTS = [];
+        $contadorSuma = [];
+        $contadoresSemana = [];
+        $TcontadorSuma3 = [];
+        $Tporcentajes3 = [];
+        $TcontadorSuma = [];
+        $Tporcentajes = [];
+
+        foreach ($mesesAMostrar as $mes => $semanas) {
+            foreach ($semanas as $semana) {
+                $contadorTS[$semana] = 0;
+                $contadorSuma[$semana] = 0;
+                $TcontadorSuma3[$semana] = 0;
+                $Tporcentajes3[$semana] = 0;
+                $TcontadorSuma[$semana] = 0;
+                $Tporcentajes[$semana] = 0;
+                for ($i = 1; $i <= 7; $i++) {
+                    $contadoresSemana[$semana][$i] = 0;
+                }
+            }
+        }
+
+        foreach ($produccionPlanta1 as $produccion) {
+            $semana = $produccion->semana;
+            $valor = $produccion->valor;
+            $te = $produccion->te;
+
+            $contadorTS[$semana] += 1;
+            $contadorSuma[$semana] += $valor;
+            $contadoresSemana[$semana][$valor] += 1;
+
+            if ($te == 1) {
+                $TcontadorSuma3[$semana] += 1;
+            }
+        }
+
+        foreach ($produccionPlanta2 as $produccion) {
+            $semana = $produccion->semana;
+            $valor = $produccion->valor;
+            $te = $produccion->te;
+
+            $contadorTS[$semana] += 1;
+            $contadorSuma[$semana] += $valor;
+            $contadoresSemana[$semana][$valor] += 1;
+
+            if ($te == 1) {
+                $TcontadorSuma[$semana] += 1;
+            }
+        }
+
+        foreach ($mesesAMostrar as $mes => $semanas) {
+            foreach ($semanas as $semana) {
+                $total = $contadorTS[$semana];
+                if ($total != 0) {
+                    $Tporcentajes3[$semana] = number_format(($TcontadorSuma3[$semana] / $total) * 100, 2);
+                    $Tporcentajes[$semana] = number_format(($TcontadorSuma[$semana] / $total) * 100, 2);
+                }
+            }
+        }
+
+        return view('metas.ReporteGeneralMetas', compact(
+            'mesesAMostrar',
+            'contadorTS',
+            'contadorSuma',
+            'contadoresSemana',
+            'TcontadorSuma3',
+            'Tporcentajes3',
+            'TcontadorSuma',
+            'Tporcentajes',
+            'produccionPlanta1',
+            'produccionPlanta2'
+        ));
+    }
+    
+    private function obtenerMeses()
+    {
+        // Obtener todos los registros de la tabla produccion1
+        $produccion1 = Produccion1::all();
+
+        // Crear un array para almacenar los meses y las semanas
+        $mesesAMostrar = [];
+
+        // Recorrer todos los registros
+        foreach ($produccion1 as $produccion) {
+            // Obtener la semana y el año del registro
+            $semana = $produccion->semana;
+            $año = date('Y', strtotime($produccion->created_at)); // Asumimos que created_at es la fecha de creación del registro
+
+            // Convertir la semana y el año a una fecha
+            $fecha = new DateTime();
+            $fecha->setISODate($año, $semana);
+
+            // Obtener el mes de la fecha
+            $mes = $fecha->format('F');
+
+            // Añadir la semana al mes correspondiente en el array
+            if (!isset($mesesAMostrar[$mes])) {
+                $mesesAMostrar[$mes] = [];
+            }
+            if (!in_array($semana, $mesesAMostrar[$mes])) {
+                $mesesAMostrar[$mes][] = $semana;
+            }
+        }
+
+        // Ordenar las semanas dentro de cada mes
+        foreach ($mesesAMostrar as $mes => $semanas) {
+            sort($semanas);
+        }
+
+        // Devolver el array de meses y semanas
+        return $mesesAMostrar;
+    }
+
 
 }
