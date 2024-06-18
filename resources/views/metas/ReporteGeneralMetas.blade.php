@@ -39,7 +39,7 @@
                                 @foreach ($mesesAMostrar as $mes => $semanas)
                                     @foreach ($semanas as $semana)
                                         <th class="semana semana{{ $semana }}">&nbsp;{{ $contadorTS[$semana] }}&nbsp;</th>
-                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje[$semana] ?? 0 }}%</strong></th>
+                                        <th class="semana semana{{ $semana }}"><strong>{{ $Tporcentajes3[$semana] ?? 0 }}%</strong></th>
                                     @endforeach
                                 @endforeach
                             </tr>
@@ -96,10 +96,10 @@
                                                 @php
                                                     $produccion = $produccionPlanta1->where('supervisor_id', $supervisor->id)->where('semana', $semana)->first();
                                                     $valorSemanal = $produccion ? $produccion->valor : '';
-                                                    $colorClass = $colores[$valorSemanal] ?? '';
+                                                    $colorClass = ($valorSemanal != '') ? $colores[$valorSemanal - 1] : '';
                                                     $extraValue = $produccion ? $produccion->te : 0;
                                                 @endphp
-                                                <td class="{{ $colorClass }}">
+                                                <td style="background-color: {{ $colorClass }};">
                                                     @if($extraValue)
                                                         <strong>* * * </strong>
                                                     @endif
@@ -145,7 +145,7 @@
                                 @foreach ($mesesAMostrar as $mes => $semanas)
                                     @foreach ($semanas as $semana)
                                         <th class="semana semana{{ $semana }}">&nbsp;{{ $contadorTS[$semana] }}&nbsp;</th>
-                                        <th class="semana semana{{ $semana }}"><strong>{{ $porcentaje[$semana] ?? 0 }}%</strong></th>
+                                        <th class="semana semana{{ $semana }}"><strong>{{ $Tporcentajes[$semana] ?? 0 }}%</strong></th>
                                     @endforeach
                                 @endforeach
                             </tr>
@@ -202,10 +202,10 @@
                                                 @php
                                                     $produccion = $produccionPlanta2->where('supervisor_id', $supervisor->id)->where('semana', $semana)->first();
                                                     $valorSemanal = $produccion ? $produccion->valor : '';
-                                                    $colorClass = $colores[$valorSemanal] ?? '';
+                                                    $colorClass = ($valorSemanal != '') ? $colores[$valorSemanal - 1] : '';
                                                     $extraValue = $produccion ? $produccion->te : 0;
                                                 @endphp
-                                                <td class="{{ $colorClass }}">
+                                                <td style="background-color: {{ $colorClass }};">
                                                     @if($extraValue)
                                                         <strong>* * * </strong>
                                                     @endif
